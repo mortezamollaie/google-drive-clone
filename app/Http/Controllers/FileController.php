@@ -70,15 +70,7 @@ class FileController extends Controller
         } else {
             foreach ($data['files'] as $file) {
                 /** @var UploadedFile $file $model */
-                $path = $file->store('/files/'. $user->id);
-
-                $model = new File();
-                $model->storage_path = $path;
-                $model->is_folder = false;
-                $model->name = $file->getClientOriginalName();
-                $model->mime = $file->getMimeType();
-                $model->size = $file->getSize();
-                $parent->appendNode($model);
+                $this->saveFile($file, $user, $parent);
             }
         }
 
@@ -88,4 +80,46 @@ class FileController extends Controller
     {
         return File::query()->whereIsRoot()->where('created_by', Auth::id())->firstOrFail();
     }
+
+    public function saveFileTree($fileTree, $parent, $user)
+    {
+        foreach ($fileTree as $name => $file) {
+            if (is_array($file)) {
+                $folder = new File();
+                $folder->is_folder = 1;
+                $folder->name = $name;
+
+                $parent->appendNode($folder);
+                $this->saveFileTree($file, $folder, $user);
+            } else {
+                $this->saveFile($file, $user, $parent);
+            }
+        }
+    }
+
+    /**
+     *
+     *
+     * @param $file
+     * @param $user
+     * @param $parent
+     * @author Zura Sekhniashvili <zurasekhniashvili@gmail.com>
+     */
+    private function saveFile($file, $user, $parent): void
+    {
+        $path = $file->store('/files/' . $user->id, 'local');
+
+        $model = new File();
+        $model->storage_path = $path;
+        $model->is_folder = false;
+        $model->name = $file->getClientOriginalName();
+        $model->mime = $file->getMimeType();
+        $model->size = $file->getSize();
+       // $model->uploaded_on_cloud = 0;
+
+        $parent->appendNode($model);
+
+        //UploadFileToCloudJob::dispatch($model);
+    }
+
 }
