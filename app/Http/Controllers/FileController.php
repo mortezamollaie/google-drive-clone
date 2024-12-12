@@ -7,6 +7,7 @@ use App\Http\Requests\StoreFolderRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -56,7 +57,30 @@ class FileController extends Controller
     public function store(StoreFileRequest $request)
     {
         $data = $request->validated();
-        dd($data);
+        $parent = $request->parent;
+        $user = $request->user();
+        $fileTree = $request->file_tree;
+
+        if(!$parent){
+            $parent = $this->getRoot();
+        }
+
+        if(!empty($fileTree)){
+            $this->saveFileTree($fileTree, $parent, $user);
+        } else {
+            foreach ($data['files'] as $file) {
+                /** @var UploadedFile $file $model */
+                $path = $file->store('/files/'. $user->id);
+
+                $model = new File();
+                $model->storage_path = $path;
+                $model->is_folder = false;
+                $model->name = $file->getClientOriginalName();
+                $model->mime = $file->getMimeType();
+                $model->size = $file->getSize();
+                $parent->appendNode($model);
+            }
+        }
 
     }
 
