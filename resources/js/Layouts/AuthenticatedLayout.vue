@@ -22,6 +22,8 @@
             </template>
         </main>
     </div>
+
+    <FormProgress :form="fileUploadForm"/>
 </template>
 
 <script setup>
@@ -31,6 +33,7 @@ import UserSettingsDropdown from "@/Components/app/UserSettingsDropdown.vue";
 import {onMounted, ref} from "vue";
 import {emitter, FILE_UPLOAD_STARTED} from "@/event-bus.js";
 import {useForm, usePage} from "@inertiajs/vue3";
+import FormProgress from "@/Components/app/FormProgress.vue";
 
 const page = usePage();
 const fileUploadForm = useForm({
