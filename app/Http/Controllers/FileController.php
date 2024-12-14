@@ -115,7 +115,10 @@ class FileController extends Controller
         } else {
             foreach ($data['ids'] as $id) {
                 $file = File::query()->findOrFail($id);
-                $file->delete();
+                if($file){
+                    // TODO : delete files from storage
+                    $file->delete();
+                }
             }
         }
 

@@ -22,8 +22,10 @@
                     </div>
                 </li>
             </ol>
+            <div>
+                <DeleteFilesButton :delete-all="allSelected" :delete-ids="selectedIds" @delete="onDelete"/>
+            </div>
         </nav>
-        <pre>{{selected}}</pre>
         <div class="flex-1 overflow-auto">
             <table class="min-w-full">
                 <thead class="bg-gray-100 border-b">
@@ -98,6 +100,7 @@ import {httpGet} from "@/Helper/http-helper.js";
 import Checkbox from "@/Components/Checkbox.vue";
 import {emitter} from "@/event-bus.js";
 import {all} from "axios";
+import DeleteFilesButton from "@/Components/app/DeleteFilesButton.vue";
 
 
 // Uses
@@ -177,6 +180,11 @@ function onSelectCheckboxChange(file) {
         allSelected.value = checked
 
     }
+}
+
+function onDelete(){
+    allSelected.value = false
+    selected.value = {}
 }
 
 // Hooks
