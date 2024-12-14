@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\DestroyFilesRequest;
+use App\Http\Requests\FilesActionRequest;
 use App\Http\Requests\StoreFileRequest;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Resources\FileResource;
@@ -10,7 +10,11 @@ use App\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use ZipArchive;
 
 class FileController extends Controller
 {
@@ -102,7 +106,7 @@ class FileController extends Controller
         }
     }
 
-    public function destroy(DestroyFilesRequest $request)
+    public function destroy(FilesActionRequest $request)
     {
         $data = $request->validated();
         $parent = $request->parent;
@@ -123,6 +127,32 @@ class FileController extends Controller
         }
 
         return to_route('myFiles', ['folder' => $parent->path]);
+    }
+
+    public function download(FilesActionRequest $request){
+        $data = $request->validated();
+        $parent = $request->parent;
+
+        $all = $data['all'] ?? false;
+        $ids = $data['ids'] ?? [];
+
+        if (!$all && empty($ids)) {
+            return [
+                'message' => 'Please select files to download'
+            ];
+        }
+
+        if ($all) {
+            $url = $this->createZip($parent->children);
+            $filename = $parent->name . '.zip';
+        } else {
+            [$url, $filename] = $this->getDownloadUrl($ids, $parent->name);
+        }
+
+        return [
+            'url' => $url,
+            'filename' => $filename
+        ];
     }
 
     /**
@@ -150,4 +180,82 @@ class FileController extends Controller
         //UploadFileToCloudJob::dispatch($model);
     }
 
+    private function getDownloadUrl(array $ids, $zipName)
+    {
+        if (count($ids) === 1) {
+            $file = File::find($ids[0]);
+            if ($file->is_folder) {
+                if ($file->children->count() === 0) {
+                    return [
+                        'message' => 'The folder is empty'
+                    ];
+                }
+                $url = $this->createZip($file->children);
+                $filename = $file->name . '.zip';
+            } else {
+                $dest = pathinfo($file->storage_path, PATHINFO_BASENAME);
+                if ($file->uploaded_on_cloud) {
+                    $content = Storage::get($file->storage_path);
+                } else {
+                    $content = Storage::disk('local')->get($file->storage_path);
+                }
+
+                Log::debug("Getting file content. File:  " .$file->storage_path).". Content: " .  intval($content);
+
+                $success = Storage::disk('public')->put($dest, $content);
+                Log::debug('Inserted in public disk. "' . $dest . '". Success: ' . intval($success));
+                $url = asset(Storage::disk('public')->url($dest));
+                Log::debug("Logging URL " . $url);
+                $filename = $file->name;
+            }
+        } else {
+            $files = File::query()->whereIn('id', $ids)->get();
+            $url = $this->createZip($files);
+
+            $filename = $zipName . '.zip';
+        }
+
+        return [$url, $filename];
+    }
+
+    public function createZip($files): string
+    {
+        $zipPath = 'zip/' . Str::random() . '.zip';
+        $publicPath = "$zipPath";
+
+        if (!is_dir(dirname($publicPath))) {
+            Storage::disk('public')->makeDirectory(dirname($publicPath));
+        }
+
+        $zipFile = Storage::disk('public')->path($publicPath);
+
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            $this->addFilesToZip($zip, $files);
+        }
+
+        $zip->close();
+
+        return asset(Storage::disk('local')->url($zipPath));
+    }
+
+    private function addFilesToZip($zip, $files, $ancestors = '')
+    {
+        foreach ($files as $file) {
+            if ($file->is_folder) {
+                $this->addFilesToZip($zip, $file->children, $ancestors . $file->name . '/');
+            } else {
+                $localPath = Storage::disk('local')->path($file->storage_path);
+                if ($file->uploaded_on_cloud == 1) {
+                    $dest = pathinfo($file->storage_path, PATHINFO_BASENAME);
+                    $content = Storage::get($file->storage_path);
+                    Storage::disk('public')->put($dest, $content);
+                    $localPath = Storage::disk('public')->path($dest);
+                }
+
+                $zip->addFile($localPath, $ancestors . $file->name);
+            }
+        }
+    }
 }

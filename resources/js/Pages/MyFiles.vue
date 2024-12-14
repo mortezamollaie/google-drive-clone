@@ -23,6 +23,7 @@
                 </li>
             </ol>
             <div>
+                <DownloadFilesButton :all="allSelected" :ids="selectedIds" class="mr-2"/>
                 <DeleteFilesButton :delete-all="allSelected" :delete-ids="selectedIds" @delete="onDelete"/>
             </div>
         </nav>
@@ -98,9 +99,8 @@ import FileIcon from "@/Components/app/FileIcon.vue";
 import {computed, onMounted, onUpdated, ref} from "vue";
 import {httpGet} from "@/Helper/http-helper.js";
 import Checkbox from "@/Components/Checkbox.vue";
-import {emitter} from "@/event-bus.js";
-import {all} from "axios";
 import DeleteFilesButton from "@/Components/app/DeleteFilesButton.vue";
+import DownloadFilesButton from "@/Components/app/DownloadFilesButton.vue";
 
 
 // Uses
