@@ -37,6 +37,7 @@ middleware(['auth', 'verified'])->group(function () {
     Route::delete('/file', 'destroy')->name('file.delete');
     Route::post('/file/restore', 'restore')->name('file.restore');
     Route::delete('/file/delete-forever', 'deleteForever')->name('file.deleteForever');
+    Route::post('/file/add-to-favourites', 'addToFavourites')->name('file.addToFavourites');
     Route::get('/file/download', 'download')->name('file.download');
 });
 
