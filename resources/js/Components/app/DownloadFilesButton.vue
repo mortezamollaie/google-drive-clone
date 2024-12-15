@@ -68,7 +68,6 @@ function download() {
     }
     httpGet(url + '?' + p.toString())
         .then(res => {
-            console.log(res);
             if (!res.url) return;
 
             const a = document.createElement('a');
