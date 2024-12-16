@@ -24,23 +24,45 @@ class FileController extends Controller
 {
     public function myFiles(Request $request, string $folder = null)
     {
-        if($folder){
-            $folder = File::query()->where('created_by', Auth::id())
-                                   ->where('path', $folder)
-                                   ->firstOrFail();
+        $search = $request->get('search');
+
+        if ($folder) {
+            $folder = File::query()
+                ->where('created_by', Auth::id())
+                ->where('path', $folder)
+                ->firstOrFail();
         }
-        if(!$folder){
+        if (!$folder) {
             $folder = $this->getRoot();
         }
-        $files = File::query()->where('parent_id', $folder->id)
-                     ->where('created_by', Auth::id())
-                     ->orderBy('is_folder', 'desc')
-                     ->orderBy('created_at', 'desc')
-                     ->paginate(10);
+
+        $favourites = (int)$request->get('favourites');
+
+        $query = File::query()
+            ->select('files.*')
+            ->with('starred')
+            ->where('created_by', Auth::id())
+            ->where('_lft', '!=', 1)
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('files.created_at', 'desc')
+            ->orderBy('files.id', 'desc');
+
+        if ($search) {
+            $query->where('name', 'like', "%$search%");
+        } else {
+            $query->where('parent_id', $folder->id);
+        }
+
+        if ($favourites === 1) {
+            $query->join('starred_files', 'starred_files.file_id', '=', 'files.id')
+                ->where('starred_files.user_id', Auth::id());
+        }
+
+        $files = $query->paginate(10);
 
         $files = FileResource::collection($files);
 
-        if($request->wantsJson()){
+        if ($request->wantsJson()) {
             return $files;
         }
 
@@ -48,7 +70,7 @@ class FileController extends Controller
 
         $folder = new FileResource($folder);
 
-        return Inertia::render('MyFiles', compact('files','folder', 'ancestors'));
+        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
     }
 
     public function trash(Request $request)

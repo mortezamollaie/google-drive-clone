@@ -22,7 +22,6 @@
                     </div>
                 </li>
             </ol>
-
             <div class="flex">
                 <label class="flex items-center mr-3">
                     Only Favourites
