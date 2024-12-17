@@ -39,6 +39,8 @@ middleware(['auth', 'verified'])->group(function () {
     Route::delete('/file/delete-forever', 'deleteForever')->name('file.deleteForever');
     Route::post('/file/add-to-favourites', 'addToFavourites')->name('file.addToFavourites');
     Route::post('/file/share', 'share')->name('file.share');
+    Route::get('/shared-with-me', 'sharedWithMe')->name('file.sharedWithMe');
+    Route::get('/shared-by-me', 'sharedByMe')->name('file.sharedByMe');
     Route::get('/file/download', 'download')->name('file.download');
 });
 

@@ -91,6 +91,45 @@ class FileController extends Controller
         return Inertia::render('Trash', compact('files'));
     }
 
+    public function sharedWithMe(Request $request)
+    {
+        $search = $request->get('search');
+        $query = File::getSharedWithMe();
+
+        if ($search) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $files = $query->paginate(10);
+
+        $files = FileResource::collection($files);
+
+        if ($request->wantsJson()) {
+            return $files;
+        }
+
+        return Inertia::render('SharedWithMe', compact('files'));
+    }
+
+    public function sharedByMe(Request $request)
+    {
+        $search = $request->get('search');
+        $query = File::getSharedByMe();
+
+        if ($search) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $files = $query->paginate(10);
+        $files = FileResource::collection($files);
+
+        if ($request->wantsJson()) {
+            return $files;
+        }
+
+        return Inertia::render('SharedByMe', compact('files'));
+    }
+
     public function createFolder(StoreFolderRequest $request)
     {
         $data = $request->validated();
@@ -416,7 +455,7 @@ class FileController extends Controller
         }
         FileShare::insert($data);
 
-        Mail::to($user)->send(new ShareFilesMail($user, Auth::user(), $files));
+        //Mail::to($user)->send(new ShareFilesMail($user, Auth::user(), $files));
 
         return redirect()->back();
     }
