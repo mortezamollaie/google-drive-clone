@@ -42,6 +42,8 @@ middleware(['auth', 'verified'])->group(function () {
     Route::get('/shared-with-me', 'sharedWithMe')->name('file.sharedWithMe');
     Route::get('/shared-by-me', 'sharedByMe')->name('file.sharedByMe');
     Route::get('/file/download', 'download')->name('file.download');
+    Route::get('/file/download-shared-with-me', 'downloadSharedWithMe')->name('file.downloadSharedWithMe');
+    Route::get('/file/download-shared-by-me', 'downloadSharedByMe')->name('file.downloadSharedByMe');
 });
 
 Route::get('/dashboard', function () {
