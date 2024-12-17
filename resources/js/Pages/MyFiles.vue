@@ -22,6 +22,7 @@
                     </div>
                 </li>
             </ol>
+
             <div class="flex">
                 <label class="flex items-center mr-3">
                     Only Favourites
@@ -126,9 +127,9 @@ import {httpGet, httpPost} from "@/Helper/http-helper.js";
 import Checkbox from "@/Components/Checkbox.vue";
 import DeleteFilesButton from "@/Components/app/DeleteFilesButton.vue";
 import DownloadFilesButton from "@/Components/app/DownloadFilesButton.vue";
-import {emitter, showSuccessNotification} from "@/event-bus.js";
-import {all} from "axios";
+import {emitter, ON_SEARCH, showSuccessNotification} from "@/event-bus.js";
 import ShareFilesButton from "@/Components/app/ShareFilesButton.vue";
+import {all} from "axios";
 
 
 // Uses
@@ -141,6 +142,9 @@ const selected = ref({});
 const loadMoreIntersect = ref(null)
 let search = ref('');
 
+let params = null;
+
+// Props & Emit
 const props = defineProps({
     files: Object,
     folder: Object,
@@ -151,9 +155,6 @@ const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next
 })
-let params = null;
-
-// Props & Emit
 
 // Computed
 const selectedIds = computed(() => Object.entries(selected.value).filter(a => a[1]).map(a => a[0]))
@@ -221,11 +222,7 @@ function addRemoveFavourite(file) {
     httpPost(route('file.addToFavourites'), {id: file.id})
         .then(() => {
             file.is_favourite = !file.is_favourite
-            if(file.is_favourite){
-                showSuccessNotification('Selected files have been added to favourites')
-            } else {
-                showSuccessNotification('Selected files have been removed from favourites')
-            }
+            showSuccessNotification('Selected files have been added to favourites')
         })
         .catch(async (er) => {
             console.log(er.error.message);
@@ -254,9 +251,9 @@ onMounted(() => {
     onlyFavourites.value = params.get('favourites') === '1'
 
     search.value = params.get('search')
-    // emitter.on(ON_SEARCH, (value) => {
-    //     search.value = value
-    // })
+    emitter.on(ON_SEARCH, (value) => {
+        search.value = value
+    })
 
     const observer = new IntersectionObserver((entries) => entries.forEach(entry => entry.isIntersecting && loadMore()), {
         rootMargin: '-250px 0px 0px 0px'

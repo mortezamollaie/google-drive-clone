@@ -80,11 +80,22 @@ class FileController extends Controller
 
     public function trash(Request $request)
     {
-        $files = File::onlyTrashed()->where('created_by', Auth::id())->orderBy('is_folder', 'desc')->orderBy('deleted_at', 'desc')->paginate(10);
+        $search = $request->get('search');
+        $query = File::onlyTrashed()
+            ->where('created_by', Auth::id())
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('deleted_at', 'desc')
+            ->orderBy('files.id', 'desc');
+
+        if ($search) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $files = $query->paginate(10);
 
         $files = FileResource::collection($files);
 
-        if($request->wantsJson()){
+        if ($request->wantsJson()) {
             return $files;
         }
 
