@@ -416,7 +416,7 @@ class FileController extends Controller
         }
         FileShare::insert($data);
 
-        // Mail::to($user)->send(new ShareFilesMail($user, Auth::user(), $files));
+        Mail::to($user)->send(new ShareFilesMail($user, Auth::user(), $files));
 
         return redirect()->back();
     }
