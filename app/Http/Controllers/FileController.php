@@ -13,6 +13,8 @@ use App\Models\File;
 use App\Models\FileShare;
 use App\Models\StarredFile;
 use App\Models\User;
+use Aws\Exception\AwsException;
+use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -526,6 +528,5 @@ class FileController extends Controller
             'filename' => $filename
         ];
     }
-
 
 }
