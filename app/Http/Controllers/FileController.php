@@ -9,6 +9,7 @@ use App\Http\Requests\StoreFileRequest;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Requests\TrashFilesRequest;
 use App\Http\Resources\FileResource;
+use App\Jobs\UploadFileToCloudJob;
 use App\Models\File;
 use App\Models\FileShare;
 use App\Models\StarredFile;
@@ -269,11 +270,11 @@ class FileController extends Controller
         $model->name = $file->getClientOriginalName();
         $model->mime = $file->getMimeType();
         $model->size = $file->getSize();
-       // $model->uploaded_on_cloud = 0;
+        $model->uploaded_on_cloud = 0;
 
         $parent->appendNode($model);
 
-        //UploadFileToCloudJob::dispatch($model);
+        UploadFileToCloudJob::dispatch($model);
     }
 
     private function getDownloadUrl(array $ids, $zipName)
