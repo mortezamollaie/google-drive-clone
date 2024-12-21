@@ -34,7 +34,9 @@ class UploadFileToCloudJob implements ShouldQueue
             Log::debug("uploading file on S3. " . $localPath);
 
             try {
-                $success = Storage::put($model->storage_path, Storage::disk('local')->get($model->storage_path));
+                //$success = Storage::put($model->storage_path, Storage::disk('local')->get($model->storage_path));
+                $fileName = $model->name;
+                $success = Storage::disk('liara')->put($fileName, Storage::disk('local')->get($model->storage_path));
                 if($success){
                     Log::debug("uploaded. Updating the database.");
                     $model->uploaded_on_cloud = 1;
